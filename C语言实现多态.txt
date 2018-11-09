@@ -1,0 +1,74 @@
+在C/C++中实现多态有两种方式：
+
+	一：在编译阶段实现：利用函数重载
+
+	二：在运行阶段实现：C语言使用“函数指针”实现，C++使用virtual函数实现
+
+C语言实现多态案例：
+
+#include <stdio.h>
+#include <stdlib.h>
+
+/*********
+C语言函数指针实现多态
+*********/
+
+typedef void (*FUNC)(); //定义一个函数指针
+
+//父类
+typedef struct Base
+{
+	FUNC _f;
+}Base;
+
+//子类
+typedef struct Child
+{
+	Base _child;
+}Child;
+
+void printBase()
+{
+	printf("Using Base: Base::_f\n");
+}
+
+void printChild()
+{
+	printf("Using Child: Child::_f\n");
+}
+
+//显示多态效果
+void show(Base* p)
+{
+	p->_f();
+}
+
+void main()
+{
+	Base base;
+	Child child;
+	Base* pb = NULL;
+
+	base._f = printBase;
+	child._child._f = printChild;
+
+	base._f();
+	
+	pb = &base;
+	//pb->_f();
+	show(pb);
+
+	//pb = (Base*)(&child);
+	pb = &child;
+	pb->_f();
+	show(pb);
+
+	system("pause");
+}
+
+打印结果：
+Using Base: Base::_f
+Using Base: Base::_f
+Using Child: Child::_f
+Using Child: Child::_f
+请按任意键继续. . .

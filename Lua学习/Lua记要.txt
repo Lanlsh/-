@@ -1,0 +1,117 @@
+1. print(type(type(X)))       -->string         :这一行永远返回“string”，而不关乎X这个值的内容。因为type函数总是返回一个字符串！
+
+2. 	a=print;      --这是合法的
+	a(type(a))    -->function
+
+3. Lua中的字符串是不可变的值（immutable values）。不能在C语言中那样直接修改字符串中的某个字符，而是应该根据修改要求来创建一个新的字符串。
+
+4. 字符串：‘’、“”、[[  ]]、[=[   ]=](任意数量的=号，但是前后=号数量要一致)
+
+5. a.x和a[x]的区别： a.x表示a["x"],表示以字符串“x”来索引table。a[x]是以变量x的值来索引table。例：
+
+	a = {}
+	x = "y"
+	a[x] = 10
+	print(a.[x])     -->10
+	print(a.x)	 -->nil      --字段“x”（未定义）的值
+	print(a.y)       -->10	     --字段“y”的值
+
+6. nil只与其自身相等
+
+7. 对于table、userdata和函数，Lua是作引用比较的。也就是说，只有当它们引用同一个对象时，才认为它们相等。例如：
+
+	a = {}; a.x = 1; a.y=0
+	b = {}; b.x = 1; b.y=0
+	c = a
+	
+	其结果是a == c, 但a~=b
+
+	结论： 只能对两个数字或者两个字符串大小进行比较。比如“2”< "15", 2<15是true！
+
+8. 在Lua中只有false和nil为假，其它都为真。
+
+9. 对于and来说，如果它的第一个操作数为假，则返回第一个操作数，否则返回第二个操作数；对于操作符or来说，如果它的第一个操作数为真，就返回第一个操作数，否则返回第二个操作数！
+
+10. print((2<3) and 2 or 3)  -->3
+    print((2>3) and 2 or 3)  -->2
+    print((2>3) and 2)       -->false
+    print((2<3) and 2)       -->2
+	
+11. Lua中and的优先级大于or！
+
+12. a+i < b/2+1     <-->   （a+i）< ((b/2)+1)
+    5+x^2*8         <-->    5+ ((x^2)*8)
+    a<y and y<=z    <-->    (a<y) and (y<=z)
+    -x^2            <-->    -(x^2)
+    x^y^z           <-->    x^(y^z)
+
+13. break和return语句用于跳出当前的块!
+
+14. lua的弱引用：
+	
+	例： lua的自动内存管理的缺陷： 
+	
+	t = {};
+   
+    	-- 使用一个table作为t的key值
+    	key1 = {name = "key1"};
+    	t[key1] = 1;
+    	key1 = nil;
+   
+   	 -- 又使用一个table作为t的key值
+    	key2 = {name = "key2"};
+    	t[key2] = 1;
+    	key2 = nil;
+   
+    	-- 强制进行一次垃圾收集
+    	collectgarbage();
+   
+    	for key, value in pairs(t) do
+       	 print(key.name .. ":" .. value);
+   	end
+
+	输出： 
+		[LUA-print] key1:1
+		[LUA-print] key2:1
+
+	很明显，虽然给t赋值后，key1和key2都为nil了，但是他们没有被lua当做垃圾进行处理，所以他们指向的内容依然存在t中。
+
+	解决方案： 使用“弱引用”table，“弱引用table”的实现是通过“元表”实现的。代码如下：
+
+		t = {};
+   
+    		-- 给t设置一个元表，增加__mode元方法，赋值为“k”
+    		setmetatable(t, {__mode = "k"});
+   
+    		-- 使用一个table作为t的key值
+    		key1 = {name = "key1"};
+    		t[key1] = 1;
+    		key1 = nil;
+   
+    		-- 又使用一个table作为t的key值
+    		key2 = {name = "key2"};
+    		t[key2] = 1;
+    		key2 = nil;
+   
+    		-- 强制进行一次垃圾收集
+    		collectgarbage();
+   
+    		for key, value in pairs(t) do
+        	print(key.name .. ":" .. value);
+    		end
+	
+	输出结果：没有输出！！！  此时t中没有相应字段！！
+
+    三种形式的弱引用：
+	1. key值弱引用，也就是刚刚说到的情况，只要其他地方没有对key值引用，那么，table自身的这个字段也会被删除。设置方法：setmetatable(t, {__mode = “k”});
+	2. value值弱引用，情况类似，只要其他地方没有对value值引用，那么，table的这个value所在的字段也会被删除。设置方法：setmetatable(t, {__mode = “v”});
+	3. key和value弱引用，规则一样，但是key和value都同时生效，任意一个起作用时都会导致table的字段被删除。设置方法：setmetatable(t, {__mode = “kv”});
+
+    注意： 当然，这里所说的被删除，是指在Lua执行垃圾回收的时候，并不一定是立刻生效的。我们刚刚只是为了测试，而强制执行了垃圾回收。
+
+
+15. lua里面new一个对象的详细步骤： https://blog.csdn.net/st_dark/article/details/79245779
+
+
+
+	

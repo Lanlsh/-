@@ -1,0 +1,90 @@
+任务： 实时监测用户输入，当用户输入是q时，即退出。
+
+需求： 使用多线程技术
+
+思路：创建两个线程，一个线程实时获取是否有输入，另一个线程实时判断输入值是否为q
+
+设计技术： 多线程、并发执行
+
+
+
+// Windows下多线程.cpp : 定义控制台应用程序的入口点。
+//
+
+#include "stdafx.h"
+#include <Windows.h>
+#include <thread>
+#include <iostream>
+#include <mutex>
+
+using namespace std;
+
+static bool bIsReady = false;
+std::mutex mt_ready;
+
+void SetIsReady(bool bReady)
+{
+	bIsReady = bReady;	
+}
+
+bool GetIsReady()
+{
+	return bIsReady;
+}
+
+int cReady = 0;
+int pReay = 0;
+
+void CheckCin()
+{
+	char buf[100] = {0};
+	string s_buf = "";
+	while (true)
+	{
+		cin.getline(buf, 100);
+		s_buf = buf;
+		if (s_buf == "q")
+		{	
+			cReady++;
+			mt_ready.lock();
+			SetIsReady(true);
+			mt_ready.unlock();
+			cout << "cReady: " << cReady << endl;
+		}
+
+		cout << buf << endl;
+		memset(buf, 0, sizeof(buf));
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	}
+}
+
+void ProcessExit()
+{
+	while (true)
+	{
+		mt_ready.lock();
+		bool isReady = GetIsReady();
+		mt_ready.unlock();
+
+		if (isReady)
+		{
+			pReay++;
+			cout << "用户输入退出: " << pReay << endl;
+			SetIsReady(false);
+		}
+	}
+}
+
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	std::thread td_1(&CheckCin);
+	std::thread td_2(&ProcessExit);
+
+	td_1.join();
+	td_2.join();
+
+	//system("pause");
+	return 0;
+}
+
